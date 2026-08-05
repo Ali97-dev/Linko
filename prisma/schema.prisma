@@ -1,0 +1,112 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  BUSINESS
+  PROVIDER
+  ADMIN
+}
+
+enum ProviderVerificationState {
+  DRAFT
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  passwordHash  String
+  role          Role
+  emailVerified Boolean   @default(false)
+  verifiedAt    DateTime?
+  status        String    @default("active") // active | suspended
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  business Business?
+  provider Provider?
+
+  emailVerificationTokens EmailVerificationToken[]
+  passwordResetTokens     PasswordResetToken[]
+}
+
+model Business {
+  id                  String   @id @default(cuid())
+  userId              String   @unique
+  user                User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  companyName         String
+  tradeLicenceNumber  String?
+  industry            String?
+  size                String?
+  country             String?
+  city                String?
+  address             String?
+  logoUrl             String?
+  website             String?
+  contactPerson       String
+  phone               String?
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+}
+
+model Provider {
+  id                     String                     @id @default(cuid())
+  userId                 String                     @unique
+  user                   User                       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  companyName            String
+  tradeLicenceNumber     String?
+  tradeLicenceExpiry     DateTime?
+  categoryId             String?
+  category               Category?                  @relation(fields: [categoryId], references: [id])
+  description            String?
+  city                   String?
+  address                String?
+  logoUrl                String?
+  website                String?
+  yearEstablished        Int?
+  teamSize               String?
+  contactPerson          String
+  phone                  String?
+  verificationState      ProviderVerificationState  @default(DRAFT)
+  verificationNote       String?
+  approvedAt             DateTime?
+  createdAt              DateTime                   @default(now())
+  updatedAt              DateTime                   @updatedAt
+}
+
+model Category {
+  id          String     @id @default(cuid())
+  name        String
+  slug        String     @unique
+  description String?
+  imageUrl    String?
+  sortOrder   Int        @default(0)
+  active      Boolean    @default(true)
+  providers   Provider[]
+}
+
+model EmailVerificationToken {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+}
+
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+}

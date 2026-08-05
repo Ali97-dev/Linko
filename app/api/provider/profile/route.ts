@@ -1,0 +1,43 @@
+import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
+import { prisma } from "@/lib/db";
+import { requireRole } from "@/lib/auth";
+
+const schema = z.object({
+  companyName: z.string().min(1),
+  tradeLicenceNumber: z.string().min(1),
+  description: z.string().min(1),
+  city: z.string().min(1),
+  address: z.string().optional(),
+  website: z.string().optional(),
+  yearEstablished: z.coerce.number().optional(),
+  teamSize: z.string().optional(),
+  categoryId: z.string().min(1),
+});
+
+export async function PATCH(req: NextRequest) {
+  const session = await requireRole(["PROVIDER"]);
+  if (!session) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const body = await req.json();
+  const parsed = schema.safeParse(body);
+  if (!parsed.success) {
+    return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
+  }
+
+  // Submitting moves the profile from Draft (or back from Rejected) into the
+  // Admin's queue. A provider can never set their own state to Approved —
+  // that's enforced by never accepting verificationState from the client here.
+  const provider = await prisma.provider.update({
+    where: { userId: session.userId },
+    data: {
+      ...parsed.data,
+      verificationState: "PENDING",
+      verificationNote: null,
+    },
+  });
+
+  return NextResponse.json({ ok: true, provider });
+}

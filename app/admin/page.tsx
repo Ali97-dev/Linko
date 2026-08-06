@@ -8,6 +8,9 @@ export default async function AdminDashboard() {
   if (!session) redirect("/login");
 
   const pendingCount = await prisma.provider.count({ where: { verificationState: "PENDING" } });
+  const openRequestsCount = await prisma.serviceRequest.count({
+    where: { status: { notIn: ["CLOSED", "DECLINED", "CANCELLED"] } },
+  });
 
   return (
     <main className="mx-auto max-w-3xl px-6 py-10">
@@ -22,6 +25,20 @@ export default async function AdminDashboard() {
           {pendingCount > 0 && (
             <span className="rounded-full bg-warning-bg px-3 py-1 text-[12.5px] font-medium text-warning">
               {pendingCount} pending
+            </span>
+          )}
+        </div>
+      </Link>
+
+      <Link href="/admin/requests" className="lk-card mt-4 block hover:border-primary">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="font-heading text-[16px] font-bold text-ink">All requests</h2>
+            <p className="mt-1 text-[13.5px] text-ink-50">Every service request across the platform.</p>
+          </div>
+          {openRequestsCount > 0 && (
+            <span className="rounded-full bg-primary-50 px-3 py-1 text-[12.5px] font-medium text-primary">
+              {openRequestsCount} open
             </span>
           )}
         </div>

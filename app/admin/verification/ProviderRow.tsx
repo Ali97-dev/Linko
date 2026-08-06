@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 
 type ProviderWithRelations = {
   id: string;
-  companyName: string;
+  companyName: string | null;
   tradeLicenceNumber: string | null;
   description: string | null;
   city: string | null;

@@ -7,12 +7,12 @@ import { sendVerificationEmail } from "@/lib/mailer";
 
 const baseSchema = z.object({
   role: z.enum(["BUSINESS", "PROVIDER"]),
-  companyName: z.string().min(1),
-  contactPerson: z.string().min(1),
+  companyName: z.string().optional(),
+  contactPerson: z.string().optional(),
   email: z.string().email(),
   phone: z.string().optional(),
   password: z.string().min(8),
-  categoryId: z.string().optional(), // providers only, per ACC-02
+  categoryId: z.string().optional(),
 });
 
 export async function POST(req: NextRequest) {
@@ -39,14 +39,14 @@ export async function POST(req: NextRequest) {
 
     if (role === "BUSINESS") {
       await tx.business.create({
-        data: { userId: created.id, companyName, contactPerson, phone },
+        data: { userId: created.id, companyName: companyName || null, contactPerson: contactPerson || null, phone },
       });
     } else {
       await tx.provider.create({
         data: {
           userId: created.id,
-          companyName,
-          contactPerson,
+          companyName: companyName || null,
+          contactPerson: contactPerson || null,
           phone,
           categoryId: categoryId || null,
           verificationState: "DRAFT",

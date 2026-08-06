@@ -1,2 +1,19 @@
+modules = ["postgresql-16", "nodejs-24"]
 [nix]
 channel = "stable-25_05"
+
+[userenv]
+
+[userenv.shared]
+APP_URL = "https://432d63ff-f525-4ca2-9b9e-555aa9382aed-00-4w87hkkuwd18.sisko.replit.dev"
+EMAIL_FROM = "LINKO <noreply@linko.app>"
+NODE_ENV = "development"
+RESEND_API_KEY = ""
+
+[[ports]]
+localPort = 3000
+externalPort = 80
+
+[[ports]]
+localPort = 3001
+externalPort = 3001

@@ -1,20 +1,17 @@
-import Link from "next/link";
+import { prisma } from "@/lib/db";
+import { SiteHeader } from "@/components/SiteHeader";
+import { HomeHero } from "@/components/HomeHero";
 
-export default function Home() {
+export default async function Home() {
+  const categories = await prisma.category.findMany({
+    where: { active: true },
+    orderBy: { sortOrder: "asc" },
+  });
+
   return (
-    <main className="mx-auto flex min-h-screen max-w-2xl flex-col items-center justify-center px-6 text-center">
-      <h1 className="font-heading text-[26px] font-bold text-ink">LINKO</h1>
-      <p className="mt-3 text-[15px] leading-[1.8] text-ink-70">
-        Discover verified providers, submit a request, track it through to delivery.
-      </p>
-      <div className="mt-8 flex gap-3">
-        <Link href="/register" className="lk-btn-primary w-auto px-6">
-          Register
-        </Link>
-        <Link href="/login" className="lk-btn-secondary w-auto px-6">
-          Log in
-        </Link>
-      </div>
-    </main>
+    <>
+      <SiteHeader />
+      <HomeHero categories={categories} />
+    </>
   );
 }

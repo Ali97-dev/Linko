@@ -16,6 +16,9 @@ export default async function ProviderDashboard() {
 
   const provider = await prisma.provider.findUnique({ where: { userId: session.userId } });
   const state = provider ? stateCopy[provider.verificationState] : stateCopy.DRAFT;
+  const newRequestsCount = provider
+    ? await prisma.serviceRequest.count({ where: { providerId: provider.id, status: "SUBMITTED" } })
+    : 0;
 
   return (
     <main className="mx-auto max-w-3xl px-6 py-10">
@@ -49,7 +52,19 @@ export default async function ProviderDashboard() {
         </div>
       )}
 
-      <p className="mt-6 text-[15px] text-ink-70">The request inbox will go here next.</p>
+      <Link href="/provider/requests" className="lk-card mt-6 block hover:border-primary">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="font-heading text-[16px] font-bold text-ink">Request inbox</h2>
+            <p className="mt-1 text-[13.5px] text-ink-50">Incoming service requests from businesses.</p>
+          </div>
+          {newRequestsCount > 0 && (
+            <span className="rounded-full bg-warning-bg px-3 py-1 text-[12.5px] font-medium text-warning">
+              {newRequestsCount} new
+            </span>
+          )}
+        </div>
+      </Link>
     </main>
   );
 }

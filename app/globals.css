@@ -19,3 +19,28 @@
     @apply text-[13.5px] font-medium text-ink-70;
   }
 }
+
+html[lang="ar"] .font-body {
+  font-family: var(--font-ibm-plex-arabic), var(--font-ibm-plex), sans-serif !important;
+  font-weight: 500 !important;
+}
+html[lang="ar"] .font-medium {
+  font-weight: 600 !important;
+}
+html[lang="ar"] .font-bold,
+html[lang="ar"] .font-semibold {
+  font-weight: 700 !important;
+}
+html[lang="ar"] .font-heading {
+  font-family: var(--font-ar-heading), var(--font-poppins), sans-serif !important;
+  font-weight: 900 !important;
+}
+html[lang="ar"] p {
+  line-height: 1.8;
+}
+
+/* The logo wordmark always stays in Latin/Poppins regardless of language */
+html[lang="ar"] a[dir="ltr"].font-heading {
+  font-family: var(--font-poppins), sans-serif !important;
+  font-weight: 900 !important;
+}

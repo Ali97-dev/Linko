@@ -20,6 +20,16 @@ enum ProviderVerificationState {
   REJECTED
 }
 
+enum RequestStatus {
+  SUBMITTED
+  ACCEPTED
+  IN_PROGRESS
+  COMPLETED
+  CLOSED
+  DECLINED
+  CANCELLED
+}
+
 model User {
   id            String    @id @default(cuid())
   email         String    @unique
@@ -42,7 +52,7 @@ model Business {
   id                  String   @id @default(cuid())
   userId              String   @unique
   user                User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  companyName         String
+  companyName         String?
   tradeLicenceNumber  String?
   industry            String?
   size                String?
@@ -51,17 +61,20 @@ model Business {
   address             String?
   logoUrl             String?
   website             String?
-  contactPerson       String
+  contactPerson       String?
   phone               String?
   createdAt           DateTime @default(now())
   updatedAt           DateTime @updatedAt
+
+  serviceRequests ServiceRequest[]
 }
 
 model Provider {
   id                     String                     @id @default(cuid())
   userId                 String                     @unique
   user                   User                       @relation(fields: [userId], references: [id], onDelete: Cascade)
-  companyName            String
+  slug                   String?                    @unique
+  companyName            String?
   tradeLicenceNumber     String?
   tradeLicenceExpiry     DateTime?
   categoryId             String?
@@ -73,13 +86,15 @@ model Provider {
   website                String?
   yearEstablished        Int?
   teamSize               String?
-  contactPerson          String
+  contactPerson          String?
   phone                  String?
   verificationState      ProviderVerificationState  @default(DRAFT)
   verificationNote       String?
   approvedAt             DateTime?
   createdAt              DateTime                   @default(now())
   updatedAt              DateTime                   @updatedAt
+
+  serviceRequests ServiceRequest[]
 }
 
 model Category {
@@ -109,4 +124,60 @@ model PasswordResetToken {
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   expiresAt DateTime
   createdAt DateTime @default(now())
+}
+
+model ServiceRequest {
+  id             String         @id @default(cuid())
+  reference      String         @unique // human-readable, e.g. REQ-2026-0001
+  title          String
+  description    String
+  budget         Float?
+  requiredByDate DateTime?
+  status         RequestStatus  @default(SUBMITTED)
+  declineReason  String?
+
+  businessId String
+  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  providerId String
+  provider   Provider @relation(fields: [providerId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  statusEvents StatusEvent[]
+  attachments  Attachment[]
+
+  @@index([businessId])
+  @@index([providerId])
+  @@index([status])
+}
+
+// Audit trail / timeline entry — one row per status change, written
+// automatically alongside every ServiceRequest.status update.
+model StatusEvent {
+  id               String          @id @default(cuid())
+  serviceRequestId String
+  serviceRequest   ServiceRequest  @relation(fields: [serviceRequestId], references: [id], onDelete: Cascade)
+  fromStatus       RequestStatus?
+  toStatus         RequestStatus
+  actor            String // e.g. "Business — Acme Trading Co.", "Provider — Gulf Tech", "Admin"
+  note             String?
+  createdAt        DateTime        @default(now())
+
+  @@index([serviceRequestId])
+}
+
+// File metadata only — actual upload/storage is a separate task, per scope.
+model Attachment {
+  id               String         @id @default(cuid())
+  serviceRequestId String
+  serviceRequest   ServiceRequest @relation(fields: [serviceRequestId], references: [id], onDelete: Cascade)
+  fileName         String
+  fileUrl          String
+  fileType         String?
+  fileSize         Int?
+  uploadedBy       String
+  createdAt        DateTime       @default(now())
+
+  @@index([serviceRequestId])
 }

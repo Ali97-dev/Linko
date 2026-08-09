@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { Menu, X } from "lucide-react";
 import { useLanguage } from "@/lib/i18n";
 import { LanguageToggle } from "./LanguageToggle";
 import { AuthModal } from "./AuthModal";
@@ -16,9 +17,130 @@ const categoryKeyMap: Record<string, string> = {
   "government-pro-services": "category.government-pro-services",
 };
 
-export function HeaderNav({ categories }: { categories: Category[] }) {
+// condensed = header is in its "scrolled" state (search bar visible).
+// There isn't room for the full nav there, so everything but Join folds
+// into a menu behind a hamburger button.
+export function HeaderNav({ categories, condensed }: { categories: Category[]; condensed: boolean }) {
   const { t } = useLanguage();
   const [modal, setModal] = useState<"login" | "signup" | null>(null);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  // Collapsing back to the full nav (scrolling up past the threshold)
+  // should close any open condensed menu rather than leave it stranded.
+  useEffect(() => {
+    if (!condensed) setMenuOpen(false);
+  }, [condensed]);
+
+  useEffect(() => {
+    if (!menuOpen) return;
+
+    function onPointerDown(e: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setMenuOpen(false);
+      }
+    }
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") setMenuOpen(false);
+    }
+
+    document.addEventListener("mousedown", onPointerDown);
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", onPointerDown);
+      document.removeEventListener("keydown", onKeyDown);
+    };
+  }, [menuOpen]);
+
+  const exploreLinks = (
+    <>
+      <Link
+        href="/providers"
+        className="block px-4 py-2.5 text-[14.5px] font-medium text-ink hover:bg-canvas"
+        onClick={() => setMenuOpen(false)}
+      >
+        {t("nav.allProviders")}
+      </Link>
+      <div className="my-1 border-t border-line" />
+      {categories.map((c) => (
+        <Link
+          key={c.id}
+          href={`/providers?category=${c.slug}`}
+          className="block px-4 py-2.5 text-[14.5px] text-ink-70 hover:bg-canvas hover:text-ink"
+          onClick={() => setMenuOpen(false)}
+        >
+          {categoryKeyMap[c.slug] ? t(categoryKeyMap[c.slug] as Parameters<typeof t>[0]) : c.name}
+        </Link>
+      ))}
+    </>
+  );
+
+  const joinButton = (
+    <button
+      onClick={() => setModal("signup")}
+      className="rounded-lg bg-ink px-7 py-3 text-[16px] font-bold text-white hover:bg-ink-70"
+    >
+      {t("nav.join")}
+    </button>
+  );
+
+  if (condensed) {
+    return (
+      <>
+        <nav className="flex items-center gap-4">
+          <div className="relative" ref={menuRef}>
+            <button
+              type="button"
+              onClick={() => setMenuOpen((open) => !open)}
+              aria-haspopup="menu"
+              aria-expanded={menuOpen}
+              aria-label={menuOpen ? t("nav.closeMenu") : t("nav.menu")}
+              className="flex h-10 w-10 items-center justify-center rounded-lg border border-line-strong text-ink-70 hover:bg-canvas hover:text-ink"
+            >
+              {menuOpen ? <X size={18} /> : <Menu size={18} />}
+            </button>
+
+            {menuOpen && (
+              <div
+                role="menu"
+                aria-label={t("nav.menu")}
+                className="absolute end-0 top-full z-20 mt-2 w-64 rounded-lg border border-line bg-surface py-2 shadow-lg"
+              >
+                <p className="px-4 pb-1 pt-2 text-[11px] font-semibold uppercase tracking-wide text-ink-50">
+                  {t("nav.explore")}
+                </p>
+                {exploreLinks}
+                <div className="my-1 border-t border-line" />
+                <div className="px-4 py-2">
+                  <LanguageToggle />
+                </div>
+                <Link
+                  href="/become-a-provider"
+                  className="block px-4 py-2.5 text-[14.5px] font-medium text-ink-70 hover:bg-canvas hover:text-ink"
+                  onClick={() => setMenuOpen(false)}
+                >
+                  {t("nav.becomeProvider")}
+                </Link>
+                <button
+                  onClick={() => {
+                    setMenuOpen(false);
+                    setModal("login");
+                  }}
+                  className="block w-full px-4 py-2.5 text-start text-[14.5px] font-medium text-ink-70 hover:bg-canvas hover:text-ink"
+                >
+                  {t("nav.login")}
+                </button>
+              </div>
+            )}
+          </div>
+
+          {joinButton}
+        </nav>
+
+        {modal && <AuthModal initialMode={modal} onClose={() => setModal(null)} />}
+      </>
+    );
+  }
 
   return (
     <>
@@ -29,22 +151,7 @@ export function HeaderNav({ categories }: { categories: Category[] }) {
             <span className="text-[11px]">v</span>
           </button>
           <div className="invisible absolute left-0 top-full z-20 w-60 rounded-lg border border-line bg-surface py-2 opacity-0 shadow-lg transition-opacity group-hover:visible group-hover:opacity-100">
-            <Link
-              href="/providers"
-              className="block px-4 py-2.5 text-[14.5px] font-medium text-ink hover:bg-canvas"
-            >
-              {t("nav.allProviders")}
-            </Link>
-            <div className="my-1 border-t border-line" />
-            {categories.map((c) => (
-              <Link
-                key={c.id}
-                href={`/providers?category=${c.slug}`}
-                className="block px-4 py-2.5 text-[14.5px] text-ink-70 hover:bg-canvas hover:text-ink"
-              >
-                {categoryKeyMap[c.slug] ? t(categoryKeyMap[c.slug] as Parameters<typeof t>[0]) : c.name}
-              </Link>
-            ))}
+            {exploreLinks}
           </div>
         </div>
         <LanguageToggle />
@@ -57,12 +164,7 @@ export function HeaderNav({ categories }: { categories: Category[] }) {
         >
           {t("nav.login")}
         </button>
-        <button
-          onClick={() => setModal("signup")}
-          className="rounded-lg bg-ink px-7 py-3 text-[16px] font-bold text-white hover:bg-ink-70"
-        >
-          {t("nav.join")}
-        </button>
+        {joinButton}
       </nav>
 
       {modal && <AuthModal initialMode={modal} onClose={() => setModal(null)} />}

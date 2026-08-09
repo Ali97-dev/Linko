@@ -21,7 +21,7 @@ type RequestRow = {
   business: { companyName: string | null };
   provider: { companyName: string | null; category: { name: string } | null };
   statusEvents: { id: string; fromStatus: RequestStatus | null; toStatus: RequestStatus; actor: string; note: string | null; createdAt: Date }[];
-  attachments: { id: string; fileName: string; fileUrl: string }[];
+  attachments: { id: string; fileName: string }[];
 };
 
 export function RequestDetail({ request }: { request: RequestRow }) {
@@ -131,7 +131,7 @@ export function RequestDetail({ request }: { request: RequestRow }) {
         )}
       </div>
 
-      <AttachmentsList attachments={request.attachments} />
+      <AttachmentsList requestId={request.id} attachments={request.attachments} />
       <StatusTimeline events={request.statusEvents} />
     </>
   );

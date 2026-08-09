@@ -3,3 +3,6 @@ node_modules
 .env
 *.local
 *.tsbuildinfo
+
+# User-uploaded attachment files (local disk storage) — not code, not versioned.
+/uploads/

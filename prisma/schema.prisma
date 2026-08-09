@@ -167,7 +167,11 @@ model StatusEvent {
   @@index([serviceRequestId])
 }
 
-// File metadata only — actual upload/storage is a separate task, per scope.
+// fileUrl holds a server-generated storage key (see lib/attachments.ts),
+// not an external URL. The actual bytes live on local disk under
+// uploads/attachments/ (outside public/, gitignored) and are only ever
+// served back through the authenticated, ownership-checked download
+// route — never as a static file.
 model Attachment {
   id               String         @id @default(cuid())
   serviceRequestId String

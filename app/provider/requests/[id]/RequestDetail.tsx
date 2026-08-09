@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useLanguage } from "@/lib/i18n";
@@ -19,7 +19,7 @@ type RequestRow = {
   status: RequestStatus;
   business: { companyName: string | null };
   statusEvents: { id: string; fromStatus: RequestStatus | null; toStatus: RequestStatus; actor: string; note: string | null; createdAt: Date }[];
-  attachments: { id: string; fileName: string; fileUrl: string }[];
+  attachments: { id: string; fileName: string }[];
 };
 
 export function RequestDetail({ request }: { request: RequestRow }) {
@@ -29,7 +29,8 @@ export function RequestDetail({ request }: { request: RequestRow }) {
   const [declining, setDeclining] = useState(false);
   const [reason, setReason] = useState("");
   const [note, setNote] = useState("");
-  const [fileForm, setFileForm] = useState({ fileName: "", fileUrl: "" });
+  const [file, setFile] = useState<File | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [error, setError] = useState<string | null>(null);
 
   async function act(action: string, body?: object) {
@@ -52,16 +53,19 @@ export function RequestDetail({ request }: { request: RequestRow }) {
 
   async function addDeliverable(e: React.FormEvent) {
     e.preventDefault();
+    if (!file) return;
     setLoading("attachment");
     setError(null);
+    const formData = new FormData();
+    formData.append("file", file);
     const res = await fetch(`/api/service-requests/${request.id}/attachments`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(fileForm),
+      body: formData,
     });
     setLoading(null);
     if (res.ok) {
-      setFileForm({ fileName: "", fileUrl: "" });
+      setFile(null);
+      if (fileInputRef.current) fileInputRef.current.value = "";
       router.refresh();
     } else {
       const data = await res.json().catch(() => ({}));
@@ -178,32 +182,25 @@ export function RequestDetail({ request }: { request: RequestRow }) {
           <h2 className="font-heading text-[16px] font-bold text-ink">{t("req.addDeliverable")}</h2>
           <form onSubmit={addDeliverable} className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-end">
             <div className="flex flex-1 flex-col gap-1.5">
-              <label className="lk-label">{t("req.fileName")}</label>
+              <label className="lk-label">{t("req.chooseFile")}</label>
               <input
+                ref={fileInputRef}
+                type="file"
                 required
-                className="lk-input"
-                value={fileForm.fileName}
-                onChange={(e) => setFileForm({ ...fileForm, fileName: e.target.value })}
+                accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg,.zip"
+                onChange={(e) => setFile(e.target.files?.[0] || null)}
+                className="lk-input file:mr-3 file:cursor-pointer file:rounded-md file:border-0 file:bg-canvas file:px-3 file:py-1.5 file:text-[13px] file:font-medium file:text-ink"
               />
+              <p className="text-[12px] text-ink-50">{t("req.fileHint")}</p>
             </div>
-            <div className="flex flex-1 flex-col gap-1.5">
-              <label className="lk-label">{t("req.fileUrl")}</label>
-              <input
-                required
-                type="url"
-                className="lk-input"
-                value={fileForm.fileUrl}
-                onChange={(e) => setFileForm({ ...fileForm, fileUrl: e.target.value })}
-              />
-            </div>
-            <button type="submit" disabled={loading !== null} className="lk-btn-primary w-auto px-5">
+            <button type="submit" disabled={loading !== null || !file} className="lk-btn-primary w-auto px-5">
               {loading === "attachment" ? t("req.adding") : t("req.addFile")}
             </button>
           </form>
         </div>
       )}
 
-      <AttachmentsList attachments={request.attachments} />
+      <AttachmentsList requestId={request.id} attachments={request.attachments} />
       <StatusTimeline events={request.statusEvents} />
     </>
   );

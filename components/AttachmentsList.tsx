@@ -2,9 +2,12 @@
 
 import { useLanguage } from "@/lib/i18n";
 
-type AttachmentRow = { id: string; fileName: string; fileUrl: string };
+type AttachmentRow = { id: string; fileName: string };
 
-export function AttachmentsList({ attachments }: { attachments: AttachmentRow[] }) {
+// Links point at the protected download route (ownership-checked server
+// side) instead of a raw external URL — see
+// app/api/service-requests/[id]/attachments/[attachmentId]/download.
+export function AttachmentsList({ requestId, attachments }: { requestId: string; attachments: AttachmentRow[] }) {
   const { t } = useLanguage();
   return (
     <div className="lk-card mt-4">
@@ -19,7 +22,10 @@ export function AttachmentsList({ attachments }: { attachments: AttachmentRow[] 
               className="flex items-center justify-between rounded-lg border border-line px-3.5 py-2.5 text-[13.5px]"
             >
               <span className="text-ink-70">{a.fileName}</span>
-              <a href={a.fileUrl} target="_blank" rel="noreferrer" className="text-primary hover:text-primary-hover">
+              <a
+                href={`/api/service-requests/${requestId}/attachments/${a.id}/download`}
+                className="text-primary hover:text-primary-hover"
+              >
                 {t("req.download")}
               </a>
             </li>

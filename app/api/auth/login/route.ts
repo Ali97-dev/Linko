@@ -38,13 +38,22 @@ export async function POST(req: NextRequest) {
   }
 
   const user = await prisma.user.findUnique({ where: { email } });
-  if (!user || user.status !== "active") {
+  if (!user) {
     return NextResponse.json({ error: "Invalid email or password" }, { status: 401 });
   }
 
   const valid = await verifyPassword(password, user.passwordHash);
   if (!valid) {
     return NextResponse.json({ error: "Invalid email or password" }, { status: 401 });
+  }
+
+  // Checked only after the password is confirmed correct — a suspended
+  // account gets a clear, specific message, but a wrong-password guess
+  // against a suspended (or nonexistent) account still gets the same
+  // generic error either way, so login attempts can't be used to probe
+  // account status.
+  if (user.status !== "active") {
+    return NextResponse.json({ error: "This account has been suspended. Contact support for help." }, { status: 403 });
   }
 
   if (!user.emailVerified) {

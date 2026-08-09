@@ -32,6 +32,18 @@ export function canTransition(actor: "BUSINESS" | "PROVIDER" | "ADMIN", from: Re
   return TRANSITIONS[actor][from]?.includes(to) ?? false;
 }
 
+// A ServiceRequest's business/provider relation goes null once that
+// account is deleted (see the DELETE route under /api/admin/accounts) —
+// the *NameSnapshot field preserves what to display instead of losing the
+// name entirely. Returns null (not a fallback string) when both are
+// missing, so callers can apply their own translated fallback text.
+export function partyDisplayName(
+  party: { companyName: string | null } | null | undefined,
+  snapshot: string | null | undefined
+): string | null {
+  return party?.companyName || snapshot || null;
+}
+
 export function formatActor(role: "BUSINESS" | "PROVIDER" | "ADMIN", name?: string | null) {
   if (role === "ADMIN") return "Admin";
   const label = role === "BUSINESS" ? "Business" : "Provider";

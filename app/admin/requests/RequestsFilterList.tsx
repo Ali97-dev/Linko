@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useLanguage } from "@/lib/i18n";
 import { StatusBadge } from "@/components/StatusBadge";
+import { partyDisplayName } from "@/lib/serviceRequests";
 import type { RequestStatus } from "@prisma/client";
 
 const STATUSES: RequestStatus[] = [
@@ -23,8 +24,10 @@ type Row = {
   title: string;
   status: RequestStatus;
   updatedAt: Date;
-  business: { companyName: string | null };
-  provider: { companyName: string | null; category: { name: string; slug: string } | null };
+  business: { companyName: string | null } | null;
+  businessNameSnapshot: string | null;
+  provider: { companyName: string | null; category: { name: string; slug: string } | null } | null;
+  providerNameSnapshot: string | null;
 };
 
 type Category = { id: string; slug: string; name: string };
@@ -120,9 +123,9 @@ export function RequestsFilterList({
                 <p className="text-[12.5px] text-ink-50">{r.reference}</p>
                 <h2 className="mt-0.5 font-heading text-[16px] font-bold text-ink">{r.title}</h2>
                 <p className="mt-1 text-[13.5px] text-ink-50">
-                  {t("req.business")}: {r.business.companyName || "—"} · {t("req.provider")}:{" "}
-                  {r.provider.companyName || "—"}
-                  {r.provider.category ? ` · ${r.provider.category.name}` : ""}
+                  {t("req.business")}: {partyDisplayName(r.business, r.businessNameSnapshot) || t("common.deletedAccount")} ·{" "}
+                  {t("req.provider")}: {partyDisplayName(r.provider, r.providerNameSnapshot) || t("common.deletedAccount")}
+                  {r.provider?.category ? ` · ${r.provider.category.name}` : ""}
                 </p>
               </div>
               <StatusBadge status={r.status} />

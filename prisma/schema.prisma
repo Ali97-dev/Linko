@@ -136,10 +136,17 @@ model ServiceRequest {
   status         RequestStatus  @default(SUBMITTED)
   declineReason  String?
 
-  businessId String
-  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
-  providerId String
-  provider   Provider @relation(fields: [providerId], references: [id], onDelete: Cascade)
+  // Nullable + SetNull (not Cascade): deleting a Business/Provider account
+  // must not destroy the *other* party's history of this request. The
+  // snapshot fields preserve a display name once the relation goes null —
+  // see app/api/admin/accounts/[id]/route.ts (DELETE) for where they're
+  // populated, right before the account is actually removed.
+  businessId         String?
+  business           Business? @relation(fields: [businessId], references: [id], onDelete: SetNull)
+  businessNameSnapshot String?
+  providerId         String?
+  provider           Provider? @relation(fields: [providerId], references: [id], onDelete: SetNull)
+  providerNameSnapshot String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

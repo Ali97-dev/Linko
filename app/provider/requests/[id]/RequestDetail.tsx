@@ -7,6 +7,7 @@ import { useLanguage } from "@/lib/i18n";
 import { StatusBadge } from "@/components/StatusBadge";
 import { StatusTimeline } from "@/components/StatusTimeline";
 import { AttachmentsList } from "@/components/AttachmentsList";
+import { partyDisplayName } from "@/lib/serviceRequests";
 import type { RequestStatus } from "@prisma/client";
 
 type RequestRow = {
@@ -17,7 +18,8 @@ type RequestRow = {
   budget: number | null;
   requiredByDate: Date | null;
   status: RequestStatus;
-  business: { companyName: string | null };
+  business: { companyName: string | null } | null;
+  businessNameSnapshot: string | null;
   statusEvents: { id: string; fromStatus: RequestStatus | null; toStatus: RequestStatus; actor: string; note: string | null; createdAt: Date }[];
   attachments: { id: string; fileName: string }[];
 };
@@ -87,7 +89,7 @@ export function RequestDetail({ request }: { request: RequestRow }) {
             <p className="text-[12.5px] text-ink-50">{request.reference}</p>
             <h1 className="mt-0.5 font-heading text-[22px] font-bold text-ink">{request.title}</h1>
             <p className="mt-1 text-[13.5px] text-ink-50">
-              {t("req.business")}: {request.business.companyName || "—"}
+              {t("req.business")}: {partyDisplayName(request.business, request.businessNameSnapshot) || t("common.deletedAccount")}
             </p>
           </div>
           <StatusBadge status={request.status} />

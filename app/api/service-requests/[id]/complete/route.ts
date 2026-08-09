@@ -24,7 +24,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     where: { id: params.id },
     include: { provider: true },
   });
-  if (!request || request.provider.userId !== session.userId) {
+  if (!request || !request.provider || request.provider.userId !== session.userId) {
     return NextResponse.json({ error: "Request not found" }, { status: 404 });
   }
 

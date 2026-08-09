@@ -2,12 +2,15 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Menu, X } from "lucide-react";
 import { useLanguage } from "@/lib/i18n";
 import { LanguageToggle } from "./LanguageToggle";
 import { AuthModal } from "./AuthModal";
+import type { Role } from "@prisma/client";
 
 type Category = { id: string; slug: string; name: string };
+type Session = { role: Role; email: string } | null;
 
 const categoryKeyMap: Record<string, string> = {
   accounting: "category.accounting",
@@ -17,15 +20,39 @@ const categoryKeyMap: Record<string, string> = {
   "government-pro-services": "category.government-pro-services",
 };
 
+const DASHBOARD_PATH: Record<Role, string> = {
+  BUSINESS: "/business",
+  PROVIDER: "/provider",
+  ADMIN: "/admin",
+};
+
 // condensed = header is in its "scrolled" state (search bar visible) — this
 // only ever applies at md+ widths (see HeaderBar). Below md, the condensed
 // (hamburger) nav is used unconditionally regardless of scroll, via the
 // "hidden md:flex" / "flex md:hidden" pairing below — there's simply never
 // room for the full nav on a phone-width screen, scrolled or not.
-export function HeaderNav({ categories, condensed }: { categories: Category[]; condensed: boolean }) {
+//
+// session: this public header is also reachable by an already-logged-in
+// user (clicking the logo from their dashboard, following a directory
+// link, etc). When present, the Log in / Join pair is replaced with a link
+// back to their dashboard and a working Log out — previously this always
+// rendered the guest nav regardless of session state, which read as if
+// navigating here had logged the user out (it hadn't; only the UI ignored
+// the session).
+export function HeaderNav({
+  categories,
+  condensed,
+  session,
+}: {
+  categories: Category[];
+  condensed: boolean;
+  session: Session;
+}) {
   const { t } = useLanguage();
+  const router = useRouter();
   const [modal, setModal] = useState<"login" | "signup" | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [loggingOut, setLoggingOut] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
   // Collapsing back to the full nav (scrolling up past the threshold, at
@@ -34,6 +61,13 @@ export function HeaderNav({ categories, condensed }: { categories: Category[]; c
   useEffect(() => {
     if (!condensed) setMenuOpen(false);
   }, [condensed]);
+
+  async function handleLogout() {
+    setLoggingOut(true);
+    await fetch("/api/auth/logout", { method: "POST" });
+    router.push("/");
+    router.refresh();
+  }
 
   useEffect(() => {
     if (!menuOpen) return;
@@ -87,6 +121,66 @@ export function HeaderNav({ categories, condensed }: { categories: Category[]; c
     </button>
   );
 
+  // Desktop account area: guest gets Log in + Join, a logged-in visitor
+  // gets a link back to their dashboard + Log out instead.
+  const accountArea = session ? (
+    <>
+      <Link href={DASHBOARD_PATH[session.role]} className="text-[16px] font-medium text-ink-70 hover:text-ink">
+        {t("dash.dashboard")}
+      </Link>
+      <button
+        onClick={handleLogout}
+        disabled={loggingOut}
+        className="lk-btn-secondary w-auto px-5 py-2.5 text-[15px]"
+      >
+        {loggingOut ? t("dash.loggingOut") : t("dash.logout")}
+      </button>
+    </>
+  ) : (
+    <>
+      <button
+        onClick={() => setModal("login")}
+        className="text-[16px] font-medium text-ink-70 hover:text-ink"
+      >
+        {t("nav.login")}
+      </button>
+      {joinButton}
+    </>
+  );
+
+  // Same idea, styled for the condensed/mobile menu list.
+  const accountMenuItems = session ? (
+    <>
+      <Link
+        href={DASHBOARD_PATH[session.role]}
+        className="block px-4 py-2.5 text-[14.5px] font-medium text-ink-70 hover:bg-canvas hover:text-ink"
+        onClick={() => setMenuOpen(false)}
+      >
+        {t("dash.dashboard")}
+      </Link>
+      <button
+        onClick={() => {
+          setMenuOpen(false);
+          handleLogout();
+        }}
+        disabled={loggingOut}
+        className="block w-full px-4 py-2.5 text-start text-[14.5px] font-medium text-danger hover:bg-canvas"
+      >
+        {loggingOut ? t("dash.loggingOut") : t("dash.logout")}
+      </button>
+    </>
+  ) : (
+    <button
+      onClick={() => {
+        setMenuOpen(false);
+        setModal("login");
+      }}
+      className="block w-full px-4 py-2.5 text-start text-[14.5px] font-medium text-ink-70 hover:bg-canvas hover:text-ink"
+    >
+      {t("nav.login")}
+    </button>
+  );
+
   return (
     <>
       {/* Full nav — only ever shown at md+ widths, and only while not
@@ -106,13 +200,7 @@ export function HeaderNav({ categories, condensed }: { categories: Category[]; c
           <Link href="/become-a-provider" className="text-[16px] font-medium text-ink-70 hover:text-ink">
             {t("nav.becomeProvider")}
           </Link>
-          <button
-            onClick={() => setModal("login")}
-            className="text-[16px] font-medium text-ink-70 hover:text-ink"
-          >
-            {t("nav.login")}
-          </button>
-          {joinButton}
+          {accountArea}
         </nav>
       )}
 
@@ -152,20 +240,13 @@ export function HeaderNav({ categories, condensed }: { categories: Category[]; c
               >
                 {t("nav.becomeProvider")}
               </Link>
-              <button
-                onClick={() => {
-                  setMenuOpen(false);
-                  setModal("login");
-                }}
-                className="block w-full px-4 py-2.5 text-start text-[14.5px] font-medium text-ink-70 hover:bg-canvas hover:text-ink"
-              >
-                {t("nav.login")}
-              </button>
+              <div className="my-1 border-t border-line" />
+              {accountMenuItems}
             </div>
           )}
         </div>
 
-        {joinButton}
+        {!session && joinButton}
       </nav>
 
       {modal && <AuthModal initialMode={modal} onClose={() => setModal(null)} />}

@@ -34,8 +34,8 @@ export async function GET(
 
   const authorized =
     session.role === "ADMIN" ||
-    (session.role === "BUSINESS" && request.business.userId === session.userId) ||
-    (session.role === "PROVIDER" && request.provider.userId === session.userId);
+    (session.role === "BUSINESS" && request.business?.userId === session.userId) ||
+    (session.role === "PROVIDER" && request.provider?.userId === session.userId);
 
   if (!authorized) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });

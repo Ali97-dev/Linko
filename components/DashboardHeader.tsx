@@ -25,6 +25,7 @@ const NAV_LINKS: Record<Role, NavLink[]> = {
     { href: "/admin", labelKey: "dash.dashboard" },
     { href: "/admin/verification", labelKey: "dash.verificationQueue" },
     { href: "/admin/requests", labelKey: "dash.allRequests" },
+    { href: "/admin/accounts", labelKey: "dash.accounts" },
   ],
 };
 

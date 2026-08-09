@@ -14,7 +14,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     where: { id: params.id },
     include: { business: true },
   });
-  if (!request || request.business.userId !== session.userId) {
+  if (!request || !request.business || request.business.userId !== session.userId) {
     return NextResponse.json({ error: "Request not found" }, { status: 404 });
   }
 

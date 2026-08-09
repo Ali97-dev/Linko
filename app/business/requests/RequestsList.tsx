@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useLanguage } from "@/lib/i18n";
 import { StatusBadge } from "@/components/StatusBadge";
+import { partyDisplayName } from "@/lib/serviceRequests";
 import type { RequestStatus } from "@prisma/client";
 
 type Row = {
@@ -11,7 +12,8 @@ type Row = {
   title: string;
   status: RequestStatus;
   updatedAt: Date;
-  provider: { companyName: string | null };
+  provider: { companyName: string | null } | null;
+  providerNameSnapshot: string | null;
 };
 
 export function RequestsList({ requests }: { requests: Row[] }) {
@@ -33,7 +35,7 @@ export function RequestsList({ requests }: { requests: Row[] }) {
                 <p className="text-[12.5px] text-ink-50">{r.reference}</p>
                 <h2 className="mt-0.5 font-heading text-[16px] font-bold text-ink">{r.title}</h2>
                 <p className="mt-1 text-[13.5px] text-ink-50">
-                  {t("req.provider")}: {r.provider.companyName || "—"}
+                  {t("req.provider")}: {partyDisplayName(r.provider, r.providerNameSnapshot) || t("common.deletedAccount")}
                 </p>
               </div>
               <StatusBadge status={r.status} />

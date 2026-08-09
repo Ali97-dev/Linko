@@ -1,6 +1,7 @@
 import { Poppins, IBM_Plex_Sans, Tajawal, IBM_Plex_Sans_Arabic } from "next/font/google";
 import "./globals.css";
 import { LanguageProvider } from "@/lib/i18n";
+import { SiteFooter } from "@/components/SiteFooter";
 
 const poppins = Poppins({
   subsets: ["latin"],
@@ -37,8 +38,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       lang="en"
       className={`${poppins.variable} ${ibmPlexSans.variable} ${tajawalArabic.variable} ${ibmPlexSansArabic.variable}`}
     >
-      <body className="min-h-screen bg-canvas font-body text-ink antialiased">
-        <LanguageProvider>{children}</LanguageProvider>
+      <body className="flex min-h-screen flex-col bg-canvas font-body text-ink antialiased">
+        <LanguageProvider>
+          <div className="flex-1">{children}</div>
+          <SiteFooter />
+        </LanguageProvider>
       </body>
     </html>
   );

@@ -1,26 +1,11 @@
 "use client";
 
-import Link from "next/link";
 import { useLanguage } from "@/lib/i18n";
-import { ArrowRight, Calculator, Scale, Cpu, Megaphone, Landmark, type LucideIcon } from "lucide-react";
+import { HowItWorks } from "./HowItWorks";
+import { CategoryShowcase } from "./CategoryShowcase";
+import { ProviderCtaBanner } from "./ProviderCtaBanner";
 
 type Category = { id: string; slug: string; name: string };
-
-const categoryIcons: Record<string, LucideIcon> = {
-  accounting: Calculator,
-  legal: Scale,
-  technology: Cpu,
-  marketing: Megaphone,
-  "government-pro-services": Landmark,
-};
-
-const categoryKeyMap: Record<string, string> = {
-  accounting: "category.accounting",
-  legal: "category.legal",
-  technology: "category.technology",
-  marketing: "category.marketing",
-  "government-pro-services": "category.government-pro-services",
-};
 
 export function HomeHero({ categories }: { categories: Category[] }) {
   const { t } = useLanguage();
@@ -59,29 +44,17 @@ export function HomeHero({ categories }: { categories: Category[] }) {
               {t("search.button")}
             </button>
           </form>
-
-          <div className="mt-6 flex flex-wrap items-center justify-center gap-2.5">
-            {categories.map((c) => {
-              const Icon = categoryIcons[c.slug] || Calculator;
-              return (
-                <Link
-                  key={c.id}
-                  href={`/providers?category=${c.slug}`}
-                  className="flex items-center gap-2 rounded-full border border-white/25 px-4 py-2 text-[13.5px] font-medium text-white hover:bg-white/10"
-                >
-                  <Icon size={15} />
-                  {categoryKeyMap[c.slug] ? t(categoryKeyMap[c.slug] as Parameters<typeof t>[0]) : c.name}
-                  <ArrowRight size={13} />
-                </Link>
-              );
-            })}
-          </div>
         </div>
       </section>
+
+      <CategoryShowcase categories={categories} />
 
       <section className="mx-auto max-w-7xl px-6 py-16 text-center">
         <p className="text-[15px] text-ink-70">{t("hero.footer")}</p>
       </section>
+
+      <HowItWorks />
+      <ProviderCtaBanner />
     </>
   );
 }

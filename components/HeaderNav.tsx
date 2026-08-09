@@ -17,17 +17,20 @@ const categoryKeyMap: Record<string, string> = {
   "government-pro-services": "category.government-pro-services",
 };
 
-// condensed = header is in its "scrolled" state (search bar visible).
-// There isn't room for the full nav there, so everything but Join folds
-// into a menu behind a hamburger button.
+// condensed = header is in its "scrolled" state (search bar visible) — this
+// only ever applies at md+ widths (see HeaderBar). Below md, the condensed
+// (hamburger) nav is used unconditionally regardless of scroll, via the
+// "hidden md:flex" / "flex md:hidden" pairing below — there's simply never
+// room for the full nav on a phone-width screen, scrolled or not.
 export function HeaderNav({ categories, condensed }: { categories: Category[]; condensed: boolean }) {
   const { t } = useLanguage();
   const [modal, setModal] = useState<"login" | "signup" | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
-  // Collapsing back to the full nav (scrolling up past the threshold)
-  // should close any open condensed menu rather than leave it stranded.
+  // Collapsing back to the full nav (scrolling up past the threshold, at
+  // md+ widths) should close any open condensed menu rather than leave it
+  // stranded.
   useEffect(() => {
     if (!condensed) setMenuOpen(false);
   }, [condensed]);
@@ -78,92 +81,90 @@ export function HeaderNav({ categories, condensed }: { categories: Category[]; c
   const joinButton = (
     <button
       onClick={() => setModal("signup")}
-      className="rounded-lg bg-ink px-7 py-3 text-[16px] font-bold text-white hover:bg-ink-70"
+      className="rounded-lg bg-ink px-5 py-2.5 text-[15px] font-bold text-white hover:bg-ink-70 sm:px-7 sm:py-3 sm:text-[16px]"
     >
       {t("nav.join")}
     </button>
   );
 
-  if (condensed) {
-    return (
-      <>
-        <nav className="flex items-center gap-4">
-          <div className="relative" ref={menuRef}>
-            <button
-              type="button"
-              onClick={() => setMenuOpen((open) => !open)}
-              aria-haspopup="menu"
-              aria-expanded={menuOpen}
-              aria-label={menuOpen ? t("nav.closeMenu") : t("nav.menu")}
-              className="flex h-10 w-10 items-center justify-center rounded-lg border border-line-strong text-ink-70 hover:bg-canvas hover:text-ink"
-            >
-              {menuOpen ? <X size={18} /> : <Menu size={18} />}
-            </button>
-
-            {menuOpen && (
-              <div
-                role="menu"
-                aria-label={t("nav.menu")}
-                className="absolute end-0 top-full z-20 mt-2 w-64 rounded-lg border border-line bg-surface py-2 shadow-lg"
-              >
-                <p className="px-4 pb-1 pt-2 text-[11px] font-semibold uppercase tracking-wide text-ink-50">
-                  {t("nav.explore")}
-                </p>
-                {exploreLinks}
-                <div className="my-1 border-t border-line" />
-                <div className="px-4 py-2">
-                  <LanguageToggle />
-                </div>
-                <Link
-                  href="/become-a-provider"
-                  className="block px-4 py-2.5 text-[14.5px] font-medium text-ink-70 hover:bg-canvas hover:text-ink"
-                  onClick={() => setMenuOpen(false)}
-                >
-                  {t("nav.becomeProvider")}
-                </Link>
-                <button
-                  onClick={() => {
-                    setMenuOpen(false);
-                    setModal("login");
-                  }}
-                  className="block w-full px-4 py-2.5 text-start text-[14.5px] font-medium text-ink-70 hover:bg-canvas hover:text-ink"
-                >
-                  {t("nav.login")}
-                </button>
-              </div>
-            )}
-          </div>
-
-          {joinButton}
-        </nav>
-
-        {modal && <AuthModal initialMode={modal} onClose={() => setModal(null)} />}
-      </>
-    );
-  }
-
   return (
     <>
-      <nav className="flex items-center gap-9">
-        <div className="group relative">
-          <button className="flex items-center gap-1.5 text-[16px] font-medium text-ink-70 hover:text-ink">
-            {t("nav.explore")}
-            <span className="text-[11px]">v</span>
-          </button>
-          <div className="invisible absolute left-0 top-full z-20 w-60 rounded-lg border border-line bg-surface py-2 opacity-0 shadow-lg transition-opacity group-hover:visible group-hover:opacity-100">
-            {exploreLinks}
+      {/* Full nav — only ever shown at md+ widths, and only while not
+          scrolled past the condense threshold there. */}
+      {!condensed && (
+        <nav className="hidden items-center gap-9 md:flex">
+          <div className="group relative">
+            <button className="flex items-center gap-1.5 text-[16px] font-medium text-ink-70 hover:text-ink">
+              {t("nav.explore")}
+              <span className="text-[11px]">v</span>
+            </button>
+            <div className="invisible absolute left-0 top-full z-20 w-60 rounded-lg border border-line bg-surface py-2 opacity-0 shadow-lg transition-opacity group-hover:visible group-hover:opacity-100">
+              {exploreLinks}
+            </div>
           </div>
+          <LanguageToggle />
+          <Link href="/become-a-provider" className="text-[16px] font-medium text-ink-70 hover:text-ink">
+            {t("nav.becomeProvider")}
+          </Link>
+          <button
+            onClick={() => setModal("login")}
+            className="text-[16px] font-medium text-ink-70 hover:text-ink"
+          >
+            {t("nav.login")}
+          </button>
+          {joinButton}
+        </nav>
+      )}
+
+      {/* Condensed (hamburger) nav — the default below md regardless of
+          scroll; also used at md+ once scrolled past the threshold. */}
+      <nav className={`items-center gap-3 sm:gap-4 ${condensed ? "flex" : "flex md:hidden"}`}>
+        <div className="relative" ref={menuRef}>
+          <button
+            type="button"
+            onClick={() => setMenuOpen((open) => !open)}
+            aria-haspopup="menu"
+            aria-expanded={menuOpen}
+            aria-label={menuOpen ? t("nav.closeMenu") : t("nav.menu")}
+            className="flex h-10 w-10 items-center justify-center rounded-lg border border-line-strong text-ink-70 hover:bg-canvas hover:text-ink"
+          >
+            {menuOpen ? <X size={18} /> : <Menu size={18} />}
+          </button>
+
+          {menuOpen && (
+            <div
+              role="menu"
+              aria-label={t("nav.menu")}
+              className="absolute end-0 top-full z-20 mt-2 w-64 max-w-[calc(100vw-2rem)] rounded-lg border border-line bg-surface py-2 shadow-lg"
+            >
+              <p className="px-4 pb-1 pt-2 text-[11px] font-semibold uppercase tracking-wide text-ink-50">
+                {t("nav.explore")}
+              </p>
+              {exploreLinks}
+              <div className="my-1 border-t border-line" />
+              <div className="px-4 py-2">
+                <LanguageToggle />
+              </div>
+              <Link
+                href="/become-a-provider"
+                className="block px-4 py-2.5 text-[14.5px] font-medium text-ink-70 hover:bg-canvas hover:text-ink"
+                onClick={() => setMenuOpen(false)}
+              >
+                {t("nav.becomeProvider")}
+              </Link>
+              <button
+                onClick={() => {
+                  setMenuOpen(false);
+                  setModal("login");
+                }}
+                className="block w-full px-4 py-2.5 text-start text-[14.5px] font-medium text-ink-70 hover:bg-canvas hover:text-ink"
+              >
+                {t("nav.login")}
+              </button>
+            </div>
+          )}
         </div>
-        <LanguageToggle />
-        <Link href="/become-a-provider" className="text-[16px] font-medium text-ink-70 hover:text-ink">
-          {t("nav.becomeProvider")}
-        </Link>
-        <button
-          onClick={() => setModal("login")}
-          className="text-[16px] font-medium text-ink-70 hover:text-ink"
-        >
-          {t("nav.login")}
-        </button>
+
         {joinButton}
       </nav>
 

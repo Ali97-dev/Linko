@@ -3,7 +3,10 @@
 import { useLanguage } from "@/lib/i18n";
 
 // Scroll state now lives in HeaderBar and is passed down, so this and
-// HeaderNav's condensed state always agree.
+// HeaderNav's condensed state always agree. Desktop-only: below md there
+// isn't room for a persistent header search box alongside the nav, and
+// every relevant page already has its own search box in its hero — see
+// the "fix mobile" pass that removed this from the header on small screens.
 export function HeaderSearch({ visible }: { visible: boolean }) {
   const { t } = useLanguage();
 
@@ -11,7 +14,7 @@ export function HeaderSearch({ visible }: { visible: boolean }) {
     <form
       action="/providers"
       aria-hidden={!visible}
-      className={`overflow-hidden transition-all duration-300 ${
+      className={`hidden overflow-hidden transition-all duration-300 md:block ${
         visible ? "w-72 opacity-100" : "w-0 opacity-0"
       }`}
     >

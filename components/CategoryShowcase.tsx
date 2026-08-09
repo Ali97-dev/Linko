@@ -45,7 +45,7 @@ export function CategoryShowcase({ categories }: { categories: Category[] }) {
           {categories.map((c) => (
             <CategoryCard
               key={c.id}
-              href={`/providers?category=${c.slug}`}
+              href={`/categories/${c.slug}`}
               icon={categoryIcons[c.slug] || Calculator}
               label={categoryKeyMap[c.slug] ? t(categoryKeyMap[c.slug] as Parameters<typeof t>[0]) : c.name}
               description={

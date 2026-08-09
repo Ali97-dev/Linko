@@ -26,6 +26,7 @@ const NAV_LINKS: Record<Role, NavLink[]> = {
     { href: "/admin/verification", labelKey: "dash.verificationQueue" },
     { href: "/admin/requests", labelKey: "dash.allRequests" },
     { href: "/admin/accounts", labelKey: "dash.accounts" },
+    { href: "/admin/reports", labelKey: "dash.reports" },
   ],
 };
 
@@ -83,8 +84,10 @@ export function DashboardHeader({ role, email }: { role: Role; email: string }) 
           <LogoMark />
         </Link>
 
-        {/* Desktop — full row, always at md+ (no scroll-based condensing needed here) */}
-        <nav className="hidden items-center gap-7 md:flex">
+        {/* Desktop — full row, always at lg+. Admin has up to 5 links plus
+            language toggle/email/logout, which doesn't fit at md (768px)
+            — lg (1024px) is where this stops being cramped. */}
+        <nav className="hidden items-center gap-6 lg:flex">
           {links.map((link) => (
             <Link key={link.href} href={link.href} className={linkClass(link.href)}>
               {t(link.labelKey)}
@@ -92,7 +95,7 @@ export function DashboardHeader({ role, email }: { role: Role; email: string }) 
           ))}
         </nav>
 
-        <div className="hidden items-center gap-4 md:flex">
+        <div className="hidden items-center gap-4 lg:flex">
           <LanguageToggle />
           <span className="max-w-[220px] truncate text-[13px] text-ink-50" title={email}>
             {email}
@@ -106,8 +109,8 @@ export function DashboardHeader({ role, email }: { role: Role; email: string }) 
           </button>
         </div>
 
-        {/* Mobile — hamburger regardless of scroll, same pattern as the public header */}
-        <div className="relative md:hidden" ref={menuRef}>
+        {/* Condensed (hamburger) — the default below lg, same pattern as the public header */}
+        <div className="relative lg:hidden" ref={menuRef}>
           <button
             type="button"
             onClick={() => setMenuOpen((open) => !open)}

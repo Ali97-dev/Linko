@@ -1,20 +1,13 @@
 "use client";
 
-import Link from "next/link";
 import { LayoutGrid, Calculator, Scale, Cpu, Megaphone, Landmark, type LucideIcon } from "lucide-react";
 import { useLanguage } from "@/lib/i18n";
 import { CategoryCard } from "@/components/CategoryCard";
+import { ProviderCard, type ProviderCardData } from "@/components/ProviderCard";
 
 type Category = { id: string; slug: string; name: string };
 
-type Provider = {
-  id: string;
-  slug: string | null;
-  companyName: string | null;
-  description: string | null;
-  city: string | null;
-  category: { name: string; slug: string } | null;
-};
+type Provider = ProviderCardData;
 
 const categoryIcons: Record<string, LucideIcon> = {
   accounting: Calculator,
@@ -45,12 +38,8 @@ export function ProvidersDirectoryContent({
 }) {
   const { t } = useLanguage();
 
-  function categoryHref(slug?: string) {
-    if (!slug) return q ? `/providers?q=${encodeURIComponent(q)}` : "/providers";
-    const params = new URLSearchParams();
-    params.set("category", slug);
-    if (q) params.set("q", q);
-    return `/providers?${params.toString()}`;
+  function allProvidersHref() {
+    return q ? `/providers?q=${encodeURIComponent(q)}` : "/providers";
   }
 
   return (
@@ -84,7 +73,7 @@ export function ProvidersDirectoryContent({
 
           <div className="mt-4 grid grid-cols-3 gap-3 sm:grid-cols-4 lg:grid-cols-6">
             <CategoryCard
-              href={categoryHref()}
+              href={allProvidersHref()}
               icon={LayoutGrid}
               label={t("nav.allProviders")}
               active={!category}
@@ -93,7 +82,7 @@ export function ProvidersDirectoryContent({
             {categories.map((c) => (
               <CategoryCard
                 key={c.id}
-                href={categoryHref(c.slug)}
+                href={`/categories/${c.slug}`}
                 icon={categoryIcons[c.slug] || LayoutGrid}
                 label={categoryKeyMap[c.slug] ? t(categoryKeyMap[c.slug] as Parameters<typeof t>[0]) : c.name}
                 active={category === c.slug}
@@ -111,20 +100,7 @@ export function ProvidersDirectoryContent({
 
         <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {providers.map((p) => (
-            <Link key={p.id} href={`/providers/${p.slug}`} className="lk-card block hover:border-primary">
-              <div className="flex items-start justify-between">
-                <h2 className="font-heading text-[16px] font-bold text-ink">{p.companyName}</h2>
-                <span className="rounded-full bg-success-bg px-2.5 py-0.5 text-[12.5px] font-medium text-success">
-                  {t("providers.verified")}
-                </span>
-              </div>
-              <p className="mt-1 text-[13.5px] text-ink-50">
-                {p.category && (categoryKeyMap[p.category.slug] ? t(categoryKeyMap[p.category.slug] as Parameters<typeof t>[0]) : p.category.name)}
-                {" - "}
-                {p.city}
-              </p>
-              <p className="mt-2 line-clamp-2 text-[15px] text-ink-70">{p.description}</p>
-            </Link>
+            <ProviderCard key={p.id} provider={p} />
           ))}
 
           {providers.length === 0 && (

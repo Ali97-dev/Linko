@@ -5,11 +5,31 @@ import { slugify } from "../lib/slugify";
 const prisma = new PrismaClient();
 
 const categories = [
-  { name: "Accounting", slug: "accounting" },
-  { name: "Legal", slug: "legal" },
-  { name: "Technology", slug: "technology" },
-  { name: "Marketing", slug: "marketing" },
-  { name: "Government / PRO Services", slug: "government-pro-services" },
+  {
+    name: "Accounting",
+    slug: "accounting",
+    description: "Bookkeeping, audit, and tax specialists for businesses of every size.",
+  },
+  {
+    name: "Legal",
+    slug: "legal",
+    description: "Corporate, commercial, and compliance counsel across Kuwait.",
+  },
+  {
+    name: "Technology",
+    slug: "technology",
+    description: "Software, IT support, and digital infrastructure providers.",
+  },
+  {
+    name: "Marketing",
+    slug: "marketing",
+    description: "Branding, digital marketing, and creative agencies.",
+  },
+  {
+    name: "Government / PRO Services",
+    slug: "government-pro-services",
+    description: "PRO services, licensing, and government liaison support.",
+  },
 ];
 
 // Example, already-approved providers so the directory (/providers) and
@@ -169,7 +189,7 @@ async function main() {
   for (const [i, c] of categories.entries()) {
     const category = await prisma.category.upsert({
       where: { slug: c.slug },
-      update: {},
+      update: { description: c.description },
       create: { ...c, sortOrder: i },
     });
     categoryIds[c.slug] = category.id;
